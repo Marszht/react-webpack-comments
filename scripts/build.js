@@ -1,35 +1,34 @@
-'use strict';
+"use strict";
 
 // Do this as the first thing so that any code reading it knows the right env.
 // 首先运行这条代码， 让代码知道当前是什么环境
-process.env.BABEL_ENV = 'production';
-process.env.NODE_ENV = 'production';
+process.env.BABEL_ENV = "production";
+process.env.NODE_ENV = "production";
 
 // Makes the script crash on unhandled rejections instead of silently
 // ignoring them. In the future, promise rejections that are not handled will
 // terminate the Node.js process with a non-zero exit code.
 // 当打包遇到问题的时候， 推出程序而不是忽略它
-process.on('unhandledRejection', err => {
+process.on("unhandledRejection", (err) => {
   throw err;
 });
 
 // Ensure environment variables are read.
-// 确保我们的环境变量生效了，env 中会处理一些环境的问题  
-require('../config/env');
+// 确保我们的环境变量生效了，env 中会处理一些环境的问题
+require("../config/env");
 
-
-const path = require('path');
-const chalk = require('react-dev-utils/chalk');
-const fs = require('fs-extra');
-const bfj = require('bfj');
-const webpack = require('webpack');
-const configFactory = require('../config/webpack.config');
-const paths = require('../config/paths');
-const checkRequiredFiles = require('react-dev-utils/checkRequiredFiles');
-const formatWebpackMessages = require('react-dev-utils/formatWebpackMessages');
-const printHostingInstructions = require('react-dev-utils/printHostingInstructions');
-const FileSizeReporter = require('react-dev-utils/FileSizeReporter');
-const printBuildError = require('react-dev-utils/printBuildError');
+const path = require("path");
+const chalk = require("react-dev-utils/chalk");
+const fs = require("fs-extra"); // 对文件进行一些操作，可以可以代替 node 中的fs
+const bfj = require("bfj");
+const webpack = require("webpack");
+const configFactory = require("../config/webpack.config");
+const paths = require("../config/paths");
+const checkRequiredFiles = require("react-dev-utils/checkRequiredFiles");
+const formatWebpackMessages = require("react-dev-utils/formatWebpackMessages");
+const printHostingInstructions = require("react-dev-utils/printHostingInstructions");
+const FileSizeReporter = require("react-dev-utils/FileSizeReporter");
+const printBuildError = require("react-dev-utils/printBuildError");
 
 const measureFileSizesBeforeBuild =
   FileSizeReporter.measureFileSizesBeforeBuild;
@@ -44,23 +43,23 @@ const isInteractive = process.stdout.isTTY;
 
 // Warn and crash if required files are missing
 // 检查文件是否存在，为什么只检查这两个文件 ， 一个入口文件，一个 模板文件
-// 不用去细纠 这个函数怎么实现的， 只需要知道它的功能就行  
+// 不用去细纠 这个函数怎么实现的， 只需要知道它的功能就行
 // 这个函数就是判断当前目录是否有这两个文件 返回bool值
 if (!checkRequiredFiles([paths.appHtml, paths.appIndexJs])) {
   process.exit(1);
 }
 
 const argv = process.argv.slice(2);
-const writeStatsJson = argv.indexOf('--stats') !== -1;
+const writeStatsJson = argv.indexOf("--stats") !== -1;
 
 // Generate configuration
-const config = configFactory('production');
+const config = configFactory("production");
 
 // We require that you explicitly set browsers and do not fall back to
 // browserslist defaults.
-// 应该是打开默认的浏览器，不出现让我们选择浏览器打开本地服务的情况， 
+// 应该是打开默认的浏览器，不出现让我们选择浏览器打开本地服务的情况，
 // 其实有点疑惑，出现线上打包还需要打开浏览器的情况多么， 但是绝对有，比如说bundle 检测
-const { checkBrowsers } = require('react-dev-utils/browsersHelper');
+const { checkBrowsers } = require("react-dev-utils/browsersHelper");
 checkBrowsers(paths.appPath, isInteractive)
   .then(() => {
     // First, read the current file sizes in build directory.
@@ -68,37 +67,41 @@ checkBrowsers(paths.appPath, isInteractive)
     // 读出当前build 目录文件的大小， 可以跟打包之后的对比
     return measureFileSizesBeforeBuild(paths.appBuild);
   })
-  .then(previousFileSizes => {
+  .then((previousFileSizes) => {
+    console.log(previousFileSizes);
     // Remove all content but keep the directory so that
     // if you're in it, you don't end up in Trash
-    // 清空打包目录 ? 
+    // 清空打包目录 ?
     // 跟cleanWebpack 一样的效果，比较NB
     fs.emptyDirSync(paths.appBuild);
     // Merge with the public folder
+    // 与公共文件夹合并 public 文件夹
     copyPublicFolder();
     // Start the webpack build
+    // 开始打包
     return build(previousFileSizes);
   })
   .then(
+    // 处理build 之后控制台的打印，主要是一些 warings error fileSize
     ({ stats, previousFileSizes, warnings }) => {
       if (warnings.length) {
-        console.log(chalk.yellow('Compiled with warnings.\n'));
-        console.log(warnings.join('\n\n'));
+        console.log(chalk.yellow("Compiled with warnings.\n"));
+        console.log(warnings.join("\n\n"));
         console.log(
-          '\nSearch for the ' +
-            chalk.underline(chalk.yellow('keywords')) +
-            ' to learn more about each warning.'
+          "\nSearch for the " +
+            chalk.underline(chalk.yellow("keywords")) +
+            " to learn more about each warning."
         );
         console.log(
-          'To ignore, add ' +
-            chalk.cyan('// eslint-disable-next-line') +
-            ' to the line before.\n'
+          "To ignore, add " +
+            chalk.cyan("// eslint-disable-next-line") +
+            " to the line before.\n"
         );
       } else {
-        console.log(chalk.green('Compiled successfully.\n'));
+        console.log(chalk.green("Compiled successfully.\n"));
       }
 
-      console.log('File sizes after gzip:\n');
+      console.log("File sizes after gzip:\n");
       printFileSizesAfterBuild(
         stats,
         previousFileSizes,
@@ -120,23 +123,23 @@ checkBrowsers(paths.appPath, isInteractive)
         useYarn
       );
     },
-    err => {
-      const tscCompileOnError = process.env.TSC_COMPILE_ON_ERROR === 'true';
+    (err) => {
+      const tscCompileOnError = process.env.TSC_COMPILE_ON_ERROR === "true";
       if (tscCompileOnError) {
         console.log(
           chalk.yellow(
-            'Compiled with the following type errors (you may want to check these before deploying your app):\n'
+            "Compiled with the following type errors (you may want to check these before deploying your app):\n"
           )
         );
         printBuildError(err);
       } else {
-        console.log(chalk.red('Failed to compile.\n'));
+        console.log(chalk.red("Failed to compile.\n"));
         printBuildError(err);
         process.exit(1);
       }
     }
   )
-  .catch(err => {
+  .catch((err) => {
     if (err && err.message) {
       console.log(err.message);
     }
@@ -145,8 +148,9 @@ checkBrowsers(paths.appPath, isInteractive)
 
 // Create the production build and print the deployment instructions.
 function build(previousFileSizes) {
-  console.log('Creating an optimized production build...');
+  console.log("Creating an optimized production build...");
 
+  // webpack 编译器，
   const compiler = webpack(config);
   return new Promise((resolve, reject) => {
     compiler.run((err, stats) => {
@@ -159,10 +163,10 @@ function build(previousFileSizes) {
         let errMessage = err.message;
 
         // Add additional information for postcss errors
-        if (Object.prototype.hasOwnProperty.call(err, 'postcssNode')) {
+        if (Object.prototype.hasOwnProperty.call(err, "postcssNode")) {
           errMessage +=
-            '\nCompileError: Begins at CSS selector ' +
-            err['postcssNode'].selector;
+            "\nCompileError: Begins at CSS selector " +
+            err["postcssNode"].selector;
         }
 
         messages = formatWebpackMessages({
@@ -180,21 +184,21 @@ function build(previousFileSizes) {
         if (messages.errors.length > 1) {
           messages.errors.length = 1;
         }
-        return reject(new Error(messages.errors.join('\n\n')));
+        return reject(new Error(messages.errors.join("\n\n")));
       }
       if (
         process.env.CI &&
-        (typeof process.env.CI !== 'string' ||
-          process.env.CI.toLowerCase() !== 'false') &&
+        (typeof process.env.CI !== "string" ||
+          process.env.CI.toLowerCase() !== "false") &&
         messages.warnings.length
       ) {
         console.log(
           chalk.yellow(
-            '\nTreating warnings as errors because process.env.CI = true.\n' +
-              'Most CI servers set it automatically.\n'
+            "\nTreating warnings as errors because process.env.CI = true.\n" +
+              "Most CI servers set it automatically.\n"
           )
         );
-        return reject(new Error(messages.warnings.join('\n\n')));
+        return reject(new Error(messages.warnings.join("\n\n")));
       }
 
       const resolveArgs = {
@@ -205,9 +209,9 @@ function build(previousFileSizes) {
 
       if (writeStatsJson) {
         return bfj
-          .write(paths.appBuild + '/bundle-stats.json', stats.toJson())
+          .write(paths.appBuild + "/bundle-stats.json", stats.toJson())
           .then(() => resolve(resolveArgs))
-          .catch(error => reject(new Error(error)));
+          .catch((error) => reject(new Error(error)));
       }
 
       return resolve(resolveArgs);
@@ -218,6 +222,9 @@ function build(previousFileSizes) {
 function copyPublicFolder() {
   fs.copySync(paths.appPublic, paths.appBuild, {
     dereference: true,
-    filter: file => file !== paths.appHtml,
+    filter: (file) => {
+      // 忽略index.html 因为 index.html 会由 HtmlWebpackPlugin 生成
+      return file !== paths.appHtml;
+    },
   });
 }

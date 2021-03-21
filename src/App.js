@@ -1,10 +1,15 @@
-import logo from './logo.svg';
-import './App.css';
+import logo from "./logo.svg";
+import "./App.css";
 
 function App() {
+  function handleClick(e) {
+    e.preventDefault();
+    console.log(e);
+  }
+
   return (
     <div className="App">
-      <header className="App-header">
+      <header className="App-header" onClick={(e) => handleClick(e)}>
         <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.js</code> and save to reload.

@@ -32,7 +32,11 @@ const postcssNormalize = require('postcss-normalize');
 const appPackageJson = require(paths.appPackageJson);
 
 // Source maps are resource heavy and can cause out of memory issue for large source files.
+// Source maps 是比较大的一些资源,会造成内存问题, 默认为false 
+//  当然你可以在 build 中设置 GENERATE_SOURCEMAP 为 true 
 const shouldUseSourceMap = process.env.GENERATE_SOURCEMAP !== 'false';
+// console.log("process.env.GENERATE_SOURCEMAP",process.env.GENERATE_SOURCEMAP);
+// console.log("process.env.NODE_ENV",process.env.NODE_ENV);
 
 const webpackDevClientEntry = require.resolve(
   'react-dev-utils/webpackHotDevClient'
@@ -48,6 +52,7 @@ const shouldInlineRuntimeChunk = process.env.INLINE_RUNTIME_CHUNK !== 'false';
 const emitErrorsAsWarnings = process.env.ESLINT_NO_DEV_ERRORS === 'true';
 const disableESLintPlugin = process.env.DISABLE_ESLINT_PLUGIN === 'true';
 
+// 为啥都需要先从 process.env 中先获取一遍??
 const imageInlineSizeLimit = parseInt(
   process.env.IMAGE_INLINE_SIZE_LIMIT || '10000'
 );
@@ -81,6 +86,7 @@ const hasJsxRuntime = (() => {
 // This is the production and development configuration.
 // It is focused on developer experience, fast rebuilds, and a minimal bundle.
 module.exports = function (webpackEnv) {
+  // 如果 dev 和  pro 分开配置文件就不会有这个问题
   const isEnvDevelopment = webpackEnv === 'development';
   const isEnvProduction = webpackEnv === 'production';
 
@@ -162,6 +168,7 @@ module.exports = function (webpackEnv) {
   return {
     mode: isEnvProduction ? 'production' : isEnvDevelopment && 'development',
     // Stop compilation early in production
+    // 在生产环境阻止编译,默认为false 就是会继续编译,但是会打印在 控制台 或者浏览器中
     bail: isEnvProduction,
     devtool: isEnvProduction
       ? shouldUseSourceMap
@@ -312,8 +319,13 @@ module.exports = function (webpackEnv) {
       // This allows you to set a fallback for where webpack should look for modules.
       // We placed these paths second because we want `node_modules` to "win"
       // if there are any conflicts. This matches Node resolution mechanism.
-      // https://github.com/facebook/create-react-app/issues/253
+      // https://github.com/facebook/create-react-app/issues/253,
+      // 模块引入的时候从那些查找相应的模块, 是一个数组,从前往后遍历
       modules: ['node_modules', paths.appNodeModules].concat(
+        // TODO: 暂时可以先忽略
+        // 只会在 有 jsconfig.json  || tsconfig.json 时生效 
+        // 与下面的 modules.webpackAliases
+        // modules 都会基于上面两个文件去处理剩余的逻辑
         modules.additionalModulePaths || []
       ),
       // These are the reasonable defaults supported by the Node ecosystem.
@@ -330,10 +342,12 @@ module.exports = function (webpackEnv) {
         // https://www.smashingmagazine.com/2016/08/a-glimpse-into-the-future-with-react-native-for-web/
         'react-native': 'react-native-web',
         // Allows for better profiling with ReactDevTools
+        // 生产的时候 需要这个 简写 好像没啥用 ?? 
         ...(isEnvProductionProfile && {
           'react-dom$': 'react-dom/profiling',
           'scheduler/tracing': 'scheduler/tracing-profiling',
         }),
+        // 这个可以看看 TODO:
         ...(modules.webpackAliases || {}),
       },
       plugins: [ // 引入其他文件的时候生效
@@ -351,7 +365,7 @@ module.exports = function (webpackEnv) {
         ]),
       ],
     },
-    resolveLoader: { // 当引入loader 的时候生效
+    resolveLoader: { // 当引入loader 的时候生效 // 每个loader 都会去执行一遍这个么 ?
       plugins: [
         // Also related to Plug'n'Play, but this time it tells webpack to load its loaders
         // from the current package.
@@ -362,11 +376,13 @@ module.exports = function (webpackEnv) {
       strictExportPresence: true, // 明确导出内容
       rules: [
         // Disable require.ensure as it's not a standard language feature.
-        { parser: { requireEnsure: false } }, // 不允许使用 require.ensure 
+        { parser: { requireEnsure: false } }, // 不允许使用 require.ensure y因为不是一个标准的语法规定
         {
           // "oneOf" will traverse all following loaders until one will
           // match the requirements. When no loader matches it will fall
           // back to the "file" loader at the end of the loader list.
+          // 这个会遍历 数组中的loader, 去匹配文件相应的loader ,
+          // 当没有找到的时候默认使用最后一个file loader
           oneOf: [
             // TODO: Merge this config once `image/avif` is in the mime-db
             // https://github.com/jshttp/mime-db
@@ -428,6 +444,7 @@ module.exports = function (webpackEnv) {
                 // This is a feature of `babel-loader` for webpack (not Babel itself).
                 // It enables caching results in ./node_modules/.cache/babel-loader/
                 // directory for faster rebuilds.
+                // 对于第二次构建 提速
                 cacheDirectory: true,
                 // See #6846 for context on why cacheCompression is disabled
                 cacheCompression: false,
@@ -540,6 +557,7 @@ module.exports = function (webpackEnv) {
             // In production, they would get copied to the `build` folder.
             // This loader doesn't use a "test" so it will catch all modules
             // that fall through the other loaders.
+            // file loader用来保底,放到loader 中最后一个,
             {
               loader: require.resolve('file-loader'),
               // Exclude `js` files to keep "css" loader working as it injects

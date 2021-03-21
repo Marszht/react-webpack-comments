@@ -68,7 +68,6 @@ checkBrowsers(paths.appPath, isInteractive)
     return measureFileSizesBeforeBuild(paths.appBuild);
   })
   .then((previousFileSizes) => {
-    console.log(previousFileSizes);
     // Remove all content but keep the directory so that
     // if you're in it, you don't end up in Trash
     // 清空打包目录 ?

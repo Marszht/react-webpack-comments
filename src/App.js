@@ -1,5 +1,6 @@
 import logo from "./logo.svg";
 import "./App.css";
+import QRcode from "./components/QRcode";
 
 function App() {
   function handleClick(e) {
@@ -9,7 +10,8 @@ function App() {
 
   return (
     <div className="App">
-      <header className="App-header" onClick={(e) => handleClick(e)}>
+      <QRcode />
+      {/* <header className="App-header" onClick={(e) => handleClick(e)}>
         <img src={logo} className="App-logo" alt="logo" />
         <p>
           Edit <code>src/App.js</code> and save to reload.
@@ -22,7 +24,7 @@ function App() {
         >
           Learn React
         </a>
-      </header>
+      </header> */}
     </div>
   );
 }
